@@ -16,15 +16,31 @@ app.config['MYSQL_DB'] = 'grades'
 
 mysql = MySQL(app)
 
-cursor = mysql.connection.cursor()
-
+""" 
 cursor.execute('''  CREATE TABLE table_name(field1,field2) ''')
 cursor.execute(''' INSERT INTO table_name (values) ''')
 cursor.execute(''' DELETE FROM table_name WHERE condition ''')
-
-
-
-
 mysql.connection.commit()
-
 cursor.close()
+"""
+@app.route('/', methods=['POST','GET'])
+def hello():
+    user_id = request.cookies.get('user_id')
+    if not user_id:
+        user_id = None
+    
+    vote = None
+
+    if request.method == 'POST':
+        course1 = request.form['course1']
+        course2 = request.form['course2']
+        course3 = request.form['course3']
+        course4 = request.form['course4']
+        course5 = request.form['course5']
+        cursor = mysql.connection.cursor()
+        cursor.execute(''' INSERT INTO info_table VALUES(%s,%s)''',(course1,course2,course3,course4,course5))
+        mysql.connection.commit()
+        cursor.close()
+        return
+
+app.run(host='localhost', app=5000)
