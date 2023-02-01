@@ -7,21 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auth</title>
 </head>
+
 <body>
-    <h1>Enter username and password!!!</h1>
-    <form method="post", action="/authenticate">
+    <h1>Register new user!</h1>
+    <form method="post", action="/register">
     <div class="container">
         <label for="user"><b>Username</b></label>
         <input type="text" placeholder="Enter Username" name="user" required value="{{ request.form['user'] }}">
-    
+
         <label for="pass"><b>Password</b></label>
         <input type="password" placeholder="Enter Password" name="pass" required value="{{ request.form['password'] }}">
-        <input type="submit" value="Login">
+        <input type="submit" value="Register">
     </div>
     </form>
-    <form method="", action="/register">
-        <input type="submit" value="Register new user">
-    </form>
-
 </body>
+
 </html>
