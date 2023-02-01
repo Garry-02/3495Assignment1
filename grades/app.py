@@ -7,13 +7,12 @@ import random
 import json
 import logging
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='./templates', static_folder='./static')
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'pass'
 app.config['MYSQL_DB'] = 'grades'
-
 mysql = MySQL(app)
 
 """ 
@@ -23,7 +22,8 @@ cursor.execute(''' DELETE FROM table_name WHERE condition ''')
 mysql.connection.commit()
 cursor.close()
 """
-@app.route('/', methods=['POST','GET'])
+
+@app.route('/gpa', methods=['POST','GET'])
 def hello():
     user_id = request.cookies.get('user_id')
     if not user_id:
@@ -41,6 +41,9 @@ def hello():
         cursor.execute(''' INSERT INTO info_table VALUES(%s,%s)''',(course1,course2,course3,course4,course5))
         mysql.connection.commit()
         cursor.close()
-        return
+        return render_template('gpa_calc.html'), 201
 
 app.run(host='localhost', app=5000)
+
+if __name__ == "__main__":
+    app.run(debug=True)
