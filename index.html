@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Student Percentage Calculator</title>
+  </head>
+  <body>
+    <h1>Student Percentage Calculator</h1>
+    <form>
+      <label for="course1">Course 1:</label>
+      <input type="text" id="course1" name="course1"><br><br>
+      <label for="course2">Course 2:</label>
+      <input type="text" id="course2" name="course2"><br><br>
+      <label for="course3">Course 3:</label>
+      <input type="text" id="course3" name="course3"><br><br>
+      <label for="course4">Course 4:</label>
+      <input type="text" id="course4" name="course4"><br><br>
+      <label for="course5">Course 5:</label>
+      <input type="text" id="course5" name="course5"><br><br>
+      <button onclick="calculatePercentage()">Calculate Percentage</button>
+    </form>
+    <p id="percentage"></p>
+    <script>
+      function calculatePercentage() {
+        let course1 = parseInt(document.querySelector("#course1").value);
+        let course2 = parseInt(document.querySelector("#course2").value);
+        let course3 = parseInt(document.querySelector("#course3").value);
+        let course4 = parseInt(document.querySelector("#course4").value);
+        let course5 = parseInt(document.querySelector("#course5").value);
+        let total = course1 + course2 + course3 + course4 + course5;
+        let percentage = (total / 500) * 100;
+        document.querySelector("#percentage").innerHTML =
+          "Percentage: " + percentage + "%";
+      }
+    </script>
+  </body>
+</html>
