@@ -18,13 +18,20 @@ app.config['MYSQL_DB'] = 'grades'
 
 mysql = MySQL(app)
 
-""" 
-cursor.execute('''  CREATE TABLE table_name(field1,field2) ''')
-cursor.execute(''' INSERT INTO table_name (values) ''')
-cursor.execute(''' DELETE FROM table_name WHERE condition ''')
-mysql.connection.commit()
-cursor.close()
-"""
+cursor = mysql.connection.cursor()
+
+cursor.execute('''  create database if not exists grades default character set utf8; ''')
+cursor.execute(''' create table if not exists grades (
+id int(11) not null auto_increment,
+user varchar(50) not null,
+course1 int(5) not null,
+course2 int(5),
+course3 int(5),
+course4 int(5),
+course5 int(5),
+primary key (id)
+) engine=InnoDB auto_increment=1 default charset=utf8; ''')
+
 
 @app.route('/')
 @app.route('/submit', methods=['GET','POST'])
