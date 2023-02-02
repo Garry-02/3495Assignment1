@@ -18,20 +18,8 @@ app.config['MYSQL_DB'] = 'grades'
 
 mysql = MySQL(app)
 
-cursor = mysql.connection.cursor()
-
-cursor.execute('''  create database if not exists grades default character set utf8; ''')
-cursor.execute(''' create table if not exists grades (
-id int(11) not null auto_increment,
-user varchar(50) not null,
-course1 int(5) not null,
-course2 int(5),
-course3 int(5),
-course4 int(5),
-course5 int(5),
-primary key (id)
-) engine=InnoDB auto_increment=1 default charset=utf8; ''')
-
+with app.app_context():
+    cursor = mysql.connection.cursor()
 
 @app.route('/')
 @app.route('/submit', methods=['GET','POST'])
