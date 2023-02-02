@@ -1,8 +1,6 @@
-import os
 from app import app
-import urllib.request
 import json
-from flask import Flask, flash, request, redirect, url_for, render_template
+from flask import Flask, flash, request, redirect, render_template
 
 app.secret_key = "secret_key"
 
@@ -56,4 +54,4 @@ def register():
 
 
 if __name__ == '__main__':
-    app.run(port=5002)
+    app.run(port=5001)
