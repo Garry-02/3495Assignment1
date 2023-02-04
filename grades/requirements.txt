@@ -1,4 +1,1 @@
-Flask
-Redis
-gunicorn
-flask_mysqldb
+flask
