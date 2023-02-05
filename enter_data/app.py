@@ -6,7 +6,11 @@ import json
 app = Flask(__name__)
 app.secret_key = 'secret key'
 
-@app.route('/', methods=['GET','POST'])
+@app.route('/')
+def home():
+    return "Hello world!"
+
+@app.route('/submit', methods=['GET','POST'])
 def submit():
     msg = ''
     config = {
