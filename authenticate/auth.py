@@ -1,6 +1,7 @@
-from app import app
 import json
 from flask import Flask, flash, request, redirect, render_template
+
+app = Flask(__name__)
 
 app.secret_key = "secret_key"
 
