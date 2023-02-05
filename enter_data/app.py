@@ -20,8 +20,8 @@ def submit():
         'port': '3307',
         'database': 'grades'
     }
-    connection = mysql.connector.connect(**config)
     if request.method == 'POST' and 'user' in request.form and 'course1' in request.form:
+        connection = mysql.connector.connect(**config)
         user = request.form['user']
         course1 = request.form['course1']
         course2 = request.form['course2']

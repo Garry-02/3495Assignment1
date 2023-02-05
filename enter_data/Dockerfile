@@ -14,5 +14,5 @@ RUN python -m pip install --upgrade pip
 RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
 
 # Run app.py when the container launches
-COPY app.py /app
+COPY .. /app
 CMD python app.py
