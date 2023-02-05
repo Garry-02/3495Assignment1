@@ -1,22 +1,15 @@
 services:
-  grades:
-    build: ./grades
-    command: python app.py
-    depends_on:
-      mysql:
-        condition: service_healthy
-    volumes:
-    - ./grades:/app
-    ports: 
-      - "5000:80"
-    
-  mysql:
-    image: mysql:8.0
-    volumes:
-      - grades-mysql-data:/var/lib/mysql
+  app:
+    build: ./enter_data
+    links:
+      - db
+    ports:
+      - "5000:5000"
+  db:
+    image: mysql:latest
+    ports:
+      - '3307:3307'
     environment:
-      MYSQL_ROOT_PASSWORD: Password
-      MYSQL_DATABASE: grades
-
-volumes:
-  grades-mysql-data:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql_db:/docker-entrypoint-initdb.d/:ro
