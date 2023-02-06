@@ -1,5 +1,4 @@
 import mysql.connector
-import pymongo
 import os
 from pymongo import MongoClient
 
@@ -13,11 +12,19 @@ config = {
 
 connection = mysql.connector.connect(**config)
 
-cursor = connection.cursor()
-query = "SELECT course1, course2, course3, course4, course5 from GRADES where user_id is {user_id};"
-cursor.execute(query)
+# if new data is added into the db, analytics should run
+
+query_for_uid = "SELECT LAST(user_id) from GRADES;"
+cursor_uid = connection.cursor()
+user_id = cursor_uid.execute(query_for_uid)
+
+cursor_uid.close()
+
+cursor_for_grades = connection.cursor()
+query_for_grades = "SELECT LAST(course1, course2, course3, course4, course5) from GRADES;"
+cursor_for_grades.execute(query_for_grades)
 grades = []
-for grade in cursor:
+for grade in cursor_for_grades:
     grades.append(grade)
 
 max_value = 0
@@ -37,18 +44,20 @@ for grade in grades:
 
     average_value = sum_of_grades/number_of_grades
 
-    
+# Close the connections
+cursor_for_grades.close()
+connection.close()
+
 client = MongoClient(os.environ["http://localhost:27017"])
 db = client[os.environ["grades_db"]]
 
 # Write the analytics to MongoDB
 db.analytics.insert_one({
+    "user_id": user_id, 
     "min_grade": min_value,
     "max_grade": max_value,
     "avg_grade": average_value
 })
 
-# Close the connections
-cursor.close()
-connection.close()
+
 # sending the data to the mongo db 
