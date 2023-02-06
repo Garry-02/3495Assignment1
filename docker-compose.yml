@@ -38,8 +38,8 @@ services:
     hostname: test_mongodb
     environment:
             MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: pass
-            MONGO_INITDB_DATABASE: animal_db
+            MONGO_INITDB_ROOT_PASSWORD: grades
+            MONGO_INITDB_DATABASE: grades_db
     ports:
       - 27017:27017
 
