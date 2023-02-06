@@ -1,9 +1,10 @@
-from flask import Flask, request
+from flask import Flask, flash, request, redirect, render_template
 import mysql.connector
 import os
 from pymongo import MongoClient
 
 app = Flask(__name__)
+app.secret_key = "secret_key"
 
 config = {
     'user': 'root',
@@ -14,6 +15,10 @@ config = {
 }
 
 @app.route("/analytics", methods=["GET"])
+def show_form():
+    return render_template('analytics.html')
+       
+@app.route("/calculate", methods=["POST"])
 def analytics():
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
@@ -50,4 +55,4 @@ def analytics():
     return "Analytics written to MongoDB"
 
 if __name__ == "__main__":
-    app.run(debug=True, host='db')
+    app.run(host='0.0.0.0', port='5005', debug=True)
