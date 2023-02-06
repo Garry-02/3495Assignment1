@@ -1,0 +1,19 @@
+# Use an official Python runtime as the base image
+FROM python:3.8-slim-buster
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install the required packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Set environment variables for MySQL and MongoDB
+ENV MYSQL_DB_URI mysql://user:password@mysql:3306/mydb
+ENV MONGO_DB_URI mongodb://mongo:27017/
+ENV MONGO_DB_NAME mydb
+
+# Run the command to start the analytics service
+CMD ["python", "analytics_service.py"]

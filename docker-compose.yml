@@ -25,23 +25,27 @@ services:
     networks:
       - project1
 
-
-  test:
-    build: ./tester
-    command: python -u app.py
-    ports: 
+  analytics:
+    build: ./analytics
+    command: python -u calculate.py
+    ports:
       - "5005:5005"
     links:
       - mongodb
+
   mongodb:
     image: mongo:latest
+    container_name: mongodb
     hostname: test_mongodb
+    command: mongod --auth
     environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: grades
             MONGO_INITDB_DATABASE: grades_db
     ports:
       - 27017:27017
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
 networks:
   project1:
