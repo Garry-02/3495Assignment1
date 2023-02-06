@@ -32,6 +32,7 @@ services:
       - "5005:5005"
     links:
       - mongodb
+      - db
 
   mongodb:
     image: mongo:latest
