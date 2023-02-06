@@ -47,6 +47,7 @@ def analytics():
     client = MongoClient(os.environ["http://localhost:27017"])
     db = client[os.environ["grades_db"]]
     db.analytics.insert_one({
+        "username": username,
         "min_grade": min_value,
         "max_grade": max_value,
         "avg_grade": average_value
