@@ -17,7 +17,7 @@ def submit():
         'user': 'root',
         'password': 'root',
         'host': 'db',
-        'port': '3307',
+        'port': '3306',
         'database': 'grades'
     }
     if request.method == 'POST' and 'user' in request.form and 'course1' in request.form:
@@ -37,4 +37,4 @@ def submit():
     return render_template('index.html', msg=msg)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', debug=True)
