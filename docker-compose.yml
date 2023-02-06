@@ -40,7 +40,7 @@ services:
     command: mongod --auth
     environment:
             MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: grades
+            MONGO_INITDB_ROOT_PASSWORD: root
             MONGO_INITDB_DATABASE: grades_db
     ports:
       - 27017:27017
