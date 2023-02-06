@@ -38,8 +38,8 @@ for grade in grades:
     average_value = sum_of_grades/number_of_grades
 
     
-client = MongoClient(os.environ["MONGO_DB_URI"])
-db = client[os.environ["MONGO_DB_NAME"]]
+client = MongoClient(os.environ["http://localhost:27017"])
+db = client[os.environ["grades_db"]]
 
 # Write the analytics to MongoDB
 db.analytics.insert_one({
