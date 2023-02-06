@@ -7,7 +7,7 @@ app.secret_key = "secret_key"
 
 @app.route('/')
 def home():
-    print('hello world')
+    return 'hello world'
 
 @app.route('/authenticate', methods=['GET'])
 def show_form():
@@ -57,6 +57,5 @@ def register():
         return render_template('auth.html')
 
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port='5001', debug=True)

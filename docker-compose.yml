@@ -1,6 +1,6 @@
 services:
   auth:
-    build: ./authenticate
+    build: ./auth
     ports:
       - "5001:5001"
     networks:
