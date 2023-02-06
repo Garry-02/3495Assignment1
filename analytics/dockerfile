@@ -8,7 +8,9 @@ WORKDIR /app
 COPY . /app
 
 # Install the required packages
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /app
+RUN python -m pip install --upgrade pip
+RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
 
 # Set environment variables for MySQL and MongoDB
 ENV MYSQL_DB_URI mysql://user:password@mysql:3306/mydb
