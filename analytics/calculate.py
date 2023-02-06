@@ -18,11 +18,12 @@ config = {
 def show_form():
     return render_template('analytics.html')
        
-@app.route("/calculate", methods=["POST"])
+@app.route("/analytics", methods=["POST"])
 def analytics():
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
-    query = "SELECT course1, course2, course3, course4, course5 from GRADES where user_id is {user_id};"
+    username = request.form['user']
+    query = f'SELECT course1, course2, course3, course4, course5 from GRADES where user_id is {username};'
     cursor.execute(query)
     grades = []
     for grade in cursor:
