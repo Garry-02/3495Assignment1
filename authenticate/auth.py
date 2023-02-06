@@ -5,6 +5,10 @@ app = Flask(__name__)
 
 app.secret_key = "secret_key"
 
+@app.route('/')
+def home():
+    print('hello world')
+
 @app.route('/authenticate', methods=['GET'])
 def show_form():
     return render_template('auth.html')
@@ -25,7 +29,7 @@ def authenticate():
         passwords.append(passw)
 
     if username in usernames and password in passwords:
-        return redirect('/submit', 307) #redirect to the app page once its ready 
+        return redirect('http://localhost:5000/submit', 307) #redirect to the app page once its ready 
     else:
         flash('Authentication failed')
         return render_template('auth.html') # for incorrect authentication
@@ -55,4 +59,4 @@ def register():
 
 
 if __name__ == '__main__':
-    app.run(port=5001)
+    app.run(host='0.0.0.0', debug=True)

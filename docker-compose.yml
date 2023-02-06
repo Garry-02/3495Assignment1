@@ -1,4 +1,10 @@
 services:
+  auth:
+    build: ./authenticate
+    ports:
+      - "5001:5001"
+    networks:
+      - project1
   app:
     build: ./enter_data
     links:
