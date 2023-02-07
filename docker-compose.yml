@@ -33,6 +33,8 @@ services:
     links:
       - mongodb
       - db
+    networks:
+      - project1
 
   mongodb:
     image: mongo:latest
@@ -47,6 +49,7 @@ services:
       - 27017:27017
     volumes:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-
+    networks:
+      - project1
 networks:
   project1:

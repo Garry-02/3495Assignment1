@@ -54,7 +54,7 @@ def analytics():
     })
     cursor.close()
     connection.close()
-    return "Analytics written to MongoDB"
+    print("Analytics written to MongoDB")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port='5005', debug=True)
