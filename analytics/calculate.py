@@ -15,9 +15,9 @@ def get_db():
     client = MongoClient(host='test_mongodb',
                          port=27017, 
                          username='root', 
-                         password='pass',
+                         password='root',
                         authSource="admin")
-    db = client["grades"]
+    db = client["grades_db"]
     return db
 
 @app.route("/analytics", methods=["GET", "POST"])
@@ -53,10 +53,11 @@ def analytics():
 
         average_value = sum_of_grades/number_of_grades
 
-        #client = MongoClient(os.environ["http://localhost:27017"])
-        #db = client[os.environ["grades_db"]]
-        
-        db = get_db()        
+#        client = MongoClient("mongodb://user_name:user_password@localhost:27017/grades-db")
+#        db = client["grades_db"]
+
+        db = get_db()
+
         db.analytics.insert_one({
             "min_grade": min_value,
             "max_grade": max_value,
