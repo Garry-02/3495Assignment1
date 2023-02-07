@@ -23,7 +23,7 @@ def analytics():
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     username = request.form['user']
-    query = f'SELECT course1, course2, course3, course4, course5 from GRADES where user_id is {username};'
+    query = f"""SELECT course1, course2, course3, course4, course5 from grades where user_id='{username}';"""
     cursor.execute(query)
     grades = []
     for grade in cursor:
