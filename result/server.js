@@ -21,7 +21,7 @@ app.get('/results', async (req, res) => {
   const analytics = db.collection('analytics');
 
   // Retrieve the analytics data from the database
-  const data = await analytics.find({}).toArray();
+  const data = await (await analytics.find({}).toArray()).sort({x:1}).limit(1);
 
   // Format the data for the HTML table
   const results = data.map(result => {

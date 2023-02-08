@@ -1,5 +1,5 @@
 from typing import List, Dict
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 import mysql.connector
 import json
 
@@ -33,8 +33,9 @@ def submit():
         connection.commit()
         cursor.close()
         msg = 'Success'
-        return render_template('index.html', msg=msg), 201
-    return render_template('index.html', msg=msg)
+        #return render_template('index.html')
+        return redirect('http://localhost:5005', code=301)
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
