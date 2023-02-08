@@ -51,5 +51,19 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - project1
+
+  result:
+    container_name: nodeapp
+    image: dockerfile
+    build: ./result
+    links:
+      - mongodb
+    volumes:
+      - ./result:/app
+    ports:
+      - '5002:5002'
+    networks:
+      - project1      
+
 networks:
   project1:
