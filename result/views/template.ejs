@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <title>Student Results</title>
+  </head>
+  <body>
+    <h1>Student Results</h1>
+    <table>
+      <tr>
+        <th>Min Grade</th>
+        <th>Max Grade</th>
+        <th>Average Grade</th>
+      </tr>
+      <% results.forEach(result => { %>
+        <tr>
+          <td><%= result.minGrade %></td>
+          <td><%= result.maxGrade %></td>
+          <td><%= result.averageGrade %></td>
+        </tr>
+      <% }); %>
+    </table>
+  </body>
+</html>
