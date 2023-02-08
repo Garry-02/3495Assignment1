@@ -29,7 +29,8 @@ def authenticate():
         passwords.append(passw)
 
     if username in usernames and password in passwords:
-        return redirect('http://localhost:5000/submit', 307) #redirect to the app page once its ready 
+        return render_template('whereto.html')
+        #return redirect('http://localhost:5000/submit', 307) #redirect to the app page once its ready 
     else:
         flash('Authentication failed')
         return render_template('auth.html') # for incorrect authentication

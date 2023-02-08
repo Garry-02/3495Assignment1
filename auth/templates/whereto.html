@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirector</title>
+</head>
+<body>
+    <button type="button" onclick="redirect_Enter()">Enter data</button>
+    <button type="button" onclick="redirect_View()">View results</button>
+    <script>
+      function redirect_Enter() {
+        window.location.href = 'http://localhost:5000/submit';
+      }
+    </script>
+    <script>
+        function redirect_View() {
+          window.location.href = 'http://localhost:5000/submit';
+        }
+    </script>
+  </body>
+</html>
