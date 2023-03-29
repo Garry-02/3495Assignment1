@@ -62,7 +62,7 @@ def analytics():
         "max_grade": max_value,
         "avg_grade": average_value
     })
-    return "Analytics written to MongoDB", 201
+    return redirect('http://localhost:5002/results', code=301)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port='5005', debug=True)

@@ -54,7 +54,6 @@ services:
 
   result:
     container_name: nodeapp
-    image: dockerfile
     build: ./result
     links:
       - mongodb
