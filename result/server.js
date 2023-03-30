@@ -21,7 +21,7 @@ app.get('/results', async (req, res) => {
   const analytics = db.collection('analytics');
 
   // Retrieve the analytics data from the database
-  const data = await (await analytics.find({}).toArray()).sort({x:1}).limit(1);
+  const data = await analytics.find({}).sort({x:1}).limit(1).toArray();
 
   // Format the data for the HTML table
   const results = data.map(result => {
@@ -38,5 +38,5 @@ app.get('/results', async (req, res) => {
 
 // Start the Express server
 app.listen(PORT, HOST, () => {
-  console.log('Running on http://${HOST}:${PORT}');
+  console.log(`Running on http://${HOST}:${PORT}`);
 });

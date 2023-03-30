@@ -1,12 +1,12 @@
 services:
   auth:
-    build: ./auth
+    image: stevenbennett90/3495assignment1-auth:latest
     ports:
       - "5001:5001"
     networks:
       - project1
   app:
-    build: ./enter_data
+    image: stevenbennett90/3495assignment1-app:latest
     links:
       - db
     ports:
@@ -15,7 +15,7 @@ services:
       - project1
   db:
     image: mysql:latest
-    command: mysqld --default-authentication-plugin=mysql_native_password
+    command: mysql --default-authentication-plugin=mysql_native_password
     ports:
       - '3306:3306'
     environment:
@@ -26,7 +26,7 @@ services:
       - project1
 
   analytics:
-    build: ./analytics
+    image: stevenbennett90/3495assignment1-analytics:latest
     command: python -u calculate.py
     ports:
       - "5005:5005"
@@ -53,8 +53,8 @@ services:
       - project1
 
   result:
-    container_name: nodeapp
-    build: ./result
+    container_name: result
+    image: stevenbennett90/3495assignment1-result:latest
     links:
       - mongodb
     volumes:
