@@ -1,0 +1,203 @@
+# mydeployment Main Services
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydeployment
+  template:
+    metadata:
+      labels:
+        app: mydeployment
+    spec:
+      containers:
+      - name: auth
+        image: stevenbennett90/3495assignment1-auth:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5001
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+      - name: app
+        image: stevenbennett90/3495assignment1-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5000
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+      - name: analytics
+        image: stevenbennett90/3495assignment1-analytics:latest
+        command:
+          - python
+          - "-u"
+          - "calculate.py"
+        ports:
+          - containerPort: 5005
+        env:
+          - name: MONGO_DB_HOST
+            value: mongodb
+          - name: MYSQL_HOST
+            value: db
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PASSWORD
+            value: root
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+      - name: result
+        image: stevenbennett90/3495assignment1-result:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5002
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+---
+# mydeployment Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydeployment-lb
+spec:
+  selector:
+    app: mydeployment
+  ports:
+    - name: auth
+      port: 5001
+      targetPort: 5001
+    - name: app
+      port: 5000
+      targetPort: 5000
+    - name: player
+      port: 5003
+      targetPort: 5003
+    - name: result
+      port: 5002
+      targetPort: 5002
+  type: LoadBalancer
+---
+# mydeployment Horizontal Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mydeployment-as
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydeployment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+---
+
+# MongoDB Database Persistent Volume Claim (Dynamic Provisioning)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
+# MongoDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-persistent-storage
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
+
+# PVC for mysql               
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# deployment for mysql
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: root
+        ports:
+          - containerPort: 3306
+            name: mysql
+        volumeMounts:
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+---
+#MySQL Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  type: ClusterIP
+  selector:             
+    app: mysql
+  ports:
+    - port: 3306  
+      targetPort: 3306
+
