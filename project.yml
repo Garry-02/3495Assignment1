@@ -1,0 +1,264 @@
+# deployment for all  the applications (auth, app, result and analytics)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project2
+  template:
+    metadata:
+      labels:
+        app: project2
+    spec:
+      containers:
+      - name: auth
+        image: stevenbennett90/3495assignment1-auth:latest
+        ports:
+          - containerPort: 5001
+        env:
+          - name: MYSQL_HOST
+            value: db
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PASSWORD
+            value: root
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+      - name: app
+        image: stevenbennett90/3495assignment1-app:latest
+        ports:
+          - containerPort: 5000
+        env:
+          - name: MYSQL_HOST
+            value: db
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PASSWORD
+            value: root
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1   
+      - name: analytics
+        image: stevenbennett90/3495assignment1-analytics:latest
+        command:
+          - python
+          - "-u"
+          - "calculate.py"
+        ports:
+          - containerPort: 5005
+        env:
+          - name: MONGO_DB_HOST
+            value: mongodb
+          - name: MYSQL_HOST
+            value: db
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PASSWORD
+            value: root
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 1
+      - name: result
+        image: stevenbennett90/3495assignment1-result:latest
+        volumeMounts:
+        - name: app-volume
+          mountPath: /app
+# volumes
+      volumes:
+      - name: analytics-volume
+        emptyDir: {}
+      - name: app-volume
+        persistentVolumeClaim:
+          claimName: app-pvc
+
+---
+# Deployment Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployment-lb
+spec:
+  selector:
+    app: project2
+  ports:
+    - name: auth
+      port: 5001
+      targetPort: 5001
+    - name: app
+      port: 5000
+      targetPort: 5000
+    - name: analytics
+      port: 5005
+      targetPort: 5005
+  type: LoadBalancer
+
+---
+# Horizontal Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: project2-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: project2
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+# PVC for mysql               
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# deployment for mysql
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: root
+        ports:
+          - containerPort: 3306
+            name: mysql
+        volumeMounts:
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+---
+#MySQL Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  type: ClusterIP
+  selector:             
+    app: mysql
+  ports:
+    - port: 3306  
+      targetPort: 3306
+
+---
+# deployment for mongodb
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+          - containerPort: 27017
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: root
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: root
+          - name: MONGO_INITDB_DATABASE
+            value: grades_db
+        volumeMounts:
+          - name: mongodb-volume
+            mountPath: /data/db
+      volumes:
+        - name: mongodb-volume
+          emptyDir: {}
+---
+#MySQL Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  type: ClusterIP
+  selector:             
+    app: mongodb
+  ports:
+    - port: 27017
+      targetPort: 27017
+
+---
+#PV for App
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-pv
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/app
+
+---
+#PVC for App
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      app: app
+---
+
+
+
+
+
+
