@@ -1,0 +1,285 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-secrets
+type: Opaque
+data:
+  db_root_password: cm9vdA==
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+data:
+  init.sql: |
+    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
+    create database if not exists grades;
+    use grades;
+    
+    create table grades (
+        grade_id int NOT NULL AUTO_INCREMENT,
+        user_id varchar(50) NOT NULL,
+        course1 int not null,
+        course2 int,
+        course3 iNT,
+        course4 int,
+        course5 int,
+        primary key (grade_id)
+    );
+    
+    Insert into grades values
+    (NULL,'Steven',90,80,70,60,50);
+
+---
+# deployment for mysql
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: mysql
+        image: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flask-secrets
+              key: db_root_password
+        ports:
+          - containerPort: 3306
+            name: db-container
+        volumeMounts:
+          - name: mysql-initdb
+            mountPath: /docker-entrypoint-initdb.d
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: db
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+    name: mysql
+  selector:
+    app: db
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaskapi-deployment
+  labels:
+    app: flaskapi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flaskapi
+  template:
+    metadata:
+      labels:
+        app: flaskapi
+    spec:
+      containers:
+        - name: flaskapi
+          image: stevenbennett90/3495assignment1-entry:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secrets
+                  key: db_root_password
+            - name: db_name
+              value: grades
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: flaskapi
+  type: LoadBalancer  
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-deployment
+  labels:
+    app: analytics
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+        - name: analytics
+          image: stevenbennett90/3495assignment1-analytics:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5005
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secrets
+                  key: db_root_password
+            - name: db_name
+              value: grades
+            - name: MONGO_HOST
+              value: 10.104.9.182:32000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+spec:
+  ports:
+  - port: 5005
+    protocol: TCP
+    targetPort: 5005
+  selector:
+    app: analytics
+  type: LoadBalancer
+
+---
+# mydeployment Main Services
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydeployment
+  template:
+    metadata:
+      labels:
+        app: mydeployment
+    spec:
+      containers:
+      - name: auth
+        image: stevenbennett90/3495assignment1-auth:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5001
+        resources:
+          limits:
+            memory: 200Mi
+      - name: result
+        image: stevenbennett90/3495assignment1-result:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5002
+        resources:
+          limits:
+            memory: 200Mi
+---
+# mydeployment Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydeployment-lb
+spec:
+  selector:
+    app: mydeployment
+  ports:
+    - name: auth
+      port: 5001
+      targetPort: 5001
+    - name: player
+      port: 5003
+      targetPort: 5003
+    - name: result
+      port: 5002
+      targetPort: 5002
+  type: LoadBalancer
+---
+# mydeployment Horizontal Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mydeployment-as
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydeployment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+---
+
+
+
