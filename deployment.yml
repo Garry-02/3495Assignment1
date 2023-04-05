@@ -191,26 +191,6 @@ spec:
         resources:
           limits:
             memory: 200Mi
-      - name: analytics
-        image: stevenbennett90/3495assignment1-analytics:latest
-        command:
-          - python
-          - "-u"
-          - "calculate.py"
-        ports:
-          - containerPort: 5005
-        env:
-          - name: MONGO_DB_HOST
-            value: mongodb
-          - name: MYSQL_HOST
-            value: mysql-db
-          - name: MYSQL_USER
-            value: root
-          - name: MYSQL_PASSWORD
-            value: root
-        resources:
-          limits:
-            memory: 200Mi
       - name: result
         image: stevenbennett90/3495assignment1-result:latest
         imagePullPolicy: IfNotPresent
