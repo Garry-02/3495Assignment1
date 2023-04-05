@@ -25,7 +25,7 @@ def analytics():
     config = {
     'user': 'root',
     'password': 'root',
-    'host': 'mysql',
+    'host': 'db',
     'port': '3306',
     'database': 'grades'
     }

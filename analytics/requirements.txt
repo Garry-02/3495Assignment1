@@ -1,6 +1,10 @@
-flask_pymongo
-pymongo
 Flask==1.0.3  
 Flask-MySQL==1.4.0  
 PyMySQL==0.9.3
+uWSGI==2.0.17.1
 mysql-connector-python
+mysql-connector
+pymongo
+flask
+cryptography
+Flask-PyMongo

@@ -1,10 +1,17 @@
-from flask import Flask, flash, request, redirect, render_template
+from flask import jsonify, request, Flask, render_template, redirect
+from flask_pymongo import PyMongo
 from flaskext.mysql import MySQL
 import os
 from pymongo import MongoClient
 
 app = Flask(__name__)
-app.secret_key = "secret_key"
+app.config["MONGO_URI"] = "mongodb://10.96.26.29:27017/dev"
+mongo = PyMongo(app)
+db = mongo.db
+
+@app.route("/analytics", methods=["GET"])
+def home():
+    return "Hello world!"
 
 mysql = MySQL()
 
@@ -14,19 +21,6 @@ app.config["MYSQL_DATABASE_DB"] = os.getenv("db_name")
 app.config["MYSQL_DATABASE_HOST"] = os.getenv("MYSQL_SERVICE_HOST")
 app.config["MYSQL_DATABASE_PORT"] = int(os.getenv("MYSQL_SERVICE_PORT"))
 mysql.init_app(app)
-
-def get_db():
-    client = MongoClient(host='test_mongodb',
-                         port=27017, 
-                         username='root', 
-                         password='root',
-                        authSource="admin")
-    db = client["grades_db"]
-    return db
-
-@app.route("/analytics", methods=["GET"])
-def show_form():
-    return render_template('analytics.html')
 
 @app.route("/", methods=["GET", "POST"])
 def analytics():
@@ -53,7 +47,6 @@ def analytics():
 
     average_value = sum_of_grades/number_of_grades
 
-    db = get_db()
     db.analytics.insert_one({
         "min_grade": min_value,
         "max_grade": max_value,

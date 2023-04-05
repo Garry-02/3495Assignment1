@@ -1,5 +1,5 @@
 # Use an official Python runtime as the base image
-FROM python:3.8
+FROM python:3.6
 
 # Set the working directory in the container
 WORKDIR /app
@@ -12,12 +12,7 @@ COPY . /app
 # Install the required packages
 COPY requirements.txt /app
 RUN python -m pip install --upgrade pip
-RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org --no-cache-dir -r requirements.txt
-
-# Set environment variables for MySQL and MongoDB
-ENV MYSQL_DB_URI mysql://user:password@mysql:3306/mydb
-ENV MONGO_DB_URI mongodb://mongo:27017/
-ENV MONGO_DB_NAME mydb
+RUN pip install -r requirements.txt
 
 # Run the command to start the analytics service
 CMD ["python", "calculate.py"]

@@ -18,7 +18,7 @@ spec:
       containers:
         - name: analytics
           image: stevenbennett90/3495assignment1-analytics:latest
-          imagePullPolicy: Never # change to your image pull policy
+          imagePullPolicy: Never
           ports:
             - containerPort: 5005
           env:
@@ -29,7 +29,8 @@ spec:
                   key: db_root_password
             - name: db_name
               value: grades
-
+            - name: MONGO_HOST
+              value: 10.104.9.182:32000
 ---
 apiVersion: v1
 kind: Service
