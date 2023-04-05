@@ -1,34 +1,36 @@
 from flask import Flask, flash, request, redirect, render_template
-import mysql.connector
+from flaskext.mysql import MySQL
 import os
 from pymongo import MongoClient
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
+mysql = MySQL()
 
-#@app.route("/analytics", methods=["GET"])
-#def show_form():
-#    return render_template('analytics.html')
-       
-def get_mysql_conn():
-    mysql_host = os.environ.get('MYSQL_HOST')
-    mysql_user = os.environ.get('MYSQL_USER')
-    mysql_password = os.environ.get('MYSQL_PASSWORD')
-    mysql_db = os.environ.get('MYSQL_DATABASE')
+app.config["MYSQL_DATABASE_USER"] = "root"
+app.config["MYSQL_DATABASE_PASSWORD"] = os.getenv("db_root_password")
+app.config["MYSQL_DATABASE_DB"] = os.getenv("db_name")
+app.config["MYSQL_DATABASE_HOST"] = os.getenv("MYSQL_SERVICE_HOST")
+app.config["MYSQL_DATABASE_PORT"] = int(os.getenv("MYSQL_SERVICE_PORT"))
+mysql.init_app(app)
 
-    conn = mysql.connector.connect(
-        host=mysql_host,
-        user=mysql_user,
-        password=mysql_password,
-        database=mysql_db
-    )
+def get_db():
+    client = MongoClient(host='test_mongodb',
+                         port=27017, 
+                         username='root', 
+                         password='root',
+                        authSource="admin")
+    db = client["grades_db"]
+    return db
 
-    return conn
+@app.route("/analytics", methods=["GET"])
+def show_form():
+    return render_template('analytics.html')
 
 @app.route("/", methods=["GET", "POST"])
 def analytics():
-    conn = get_mysql_conn()
+    conn = mysql.connect()
     cursor = conn.cursor()
     query = "SELECT course1, course2, course3, course4, course5 from grades;"
     cursor.execute(query)
@@ -51,7 +53,7 @@ def analytics():
 
     average_value = sum_of_grades/number_of_grades
 
-    db = get_mysql_conn()
+    db = get_db()
     db.analytics.insert_one({
         "min_grade": min_value,
         "max_grade": max_value,

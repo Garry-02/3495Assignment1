@@ -1,0 +1,101 @@
+# ConfigMap holding the mongo-init.js script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-configmap
+data:
+  mongo-init.js: |
+    db = db.getSiblingDB("grades_db");
+
+    db.createCollection('sample_collection');
+
+    db.sample_collection.insertMany([
+      {
+        name: 'steven',
+        set: 'b',
+        term: '4'
+      }
+    ]);
+---
+# MongoDB Database Persistent Volume Claim (Dynamic Provisioning)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/mongo
+---
+# MongoDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        component: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo
+        args: ["--dbpath","/data/db"]
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+          - name: mongodb-persistent-storage
+            mountPath: /data/db
+          - name: mongo-init
+            mountPath: /docker-entrypoint-initdb.d/
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: root
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: root
+        - name: MONGO_INITDB_DATABASE
+          value: grades_db
+      volumes:
+        - name: mongodb-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
+        - name: mongo-init
+          configMap:
+            name: mongo-init-configmap
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mongo
+  name: mongo-nodeport-svc
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+    targetPort: 27017
+    nodePort: 32000
+  selector:
+    app: mongo
+  type: NodePort

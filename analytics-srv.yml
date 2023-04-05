@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-deployment
+  labels:
+    app: analytics
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+        - name: analytics
+          image: stevenbennett90/3495assignment1-analytics:latest
+          imagePullPolicy: Never # change to your image pull policy
+          ports:
+            - containerPort: 5005
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secrets
+                  key: db_root_password
+            - name: db_name
+              value: grades
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+spec:
+  ports:
+  - port: 5005
+    protocol: TCP
+    targetPort: 5005
+  selector:
+    app: analytics
+  type: LoadBalancer

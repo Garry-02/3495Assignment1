@@ -1,4 +1,6 @@
+flask_pymongo
 pymongo
-mysql.connector
-Flask
+Flask==1.0.3  
+Flask-MySQL==1.4.0  
+PyMySQL==0.9.3
 mysql-connector-python

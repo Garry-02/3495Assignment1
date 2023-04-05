@@ -6,162 +6,8 @@ metadata:
 type: Opaque
 data:
   db_root_password: cm9vdA==
-
 ---
 
-# mydeployment Main Services
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mydeployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mydeployment
-  template:
-    metadata:
-      labels:
-        app: mydeployment
-    spec:
-      containers:
-      - name: auth
-        image: stevenbennett90/3495assignment1-auth:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-          - containerPort: 5001
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 1
-      - name: flaskapi
-        image: stevenbennett90/3495assignment1-entry:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-          - containerPort: 5000
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 1
-          env:
-            - name: db_root_password
-              valueFrom:
-                secretKeyRef:
-                  name: flask-secrets
-                  key: db_root_password
-            - name: db_name
-              value: flaskapi
-      - name: analytics
-        image: stevenbennett90/3495assignment1-analytics:latest
-        command:
-          - python
-          - "-u"
-          - "calculate.py"
-        ports:
-          - containerPort: 5005
-        env:
-          - name: MONGO_DB_HOST
-            value: mongodb
-          - name: MYSQL_HOST
-            value: mysql-db
-          - name: MYSQL_USER
-            value: root
-          - name: MYSQL_PASSWORD
-            value: root
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 1
-      - name: result
-        image: stevenbennett90/3495assignment1-result:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-          - containerPort: 5002
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 1
----
-# mydeployment Expose Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: mydeployment-lb
-spec:
-  selector:
-    app: mydeployment
-  ports:
-    - name: auth
-      port: 5001
-      targetPort: 5001
-    - name: flaskapi
-      port: 5000
-      targetPort: 5000
-    - name: player
-      port: 5003
-      targetPort: 5003
-    - name: result
-      port: 5002
-      targetPort: 5002
-  type: LoadBalancer
----
-# mydeployment Horizontal Scaling
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: mydeployment-as
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: mydeployment
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 50
----
-
-# MongoDB Database Persistent Volume Claim (Dynamic Provisioning)
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mongodb-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
----
-# MongoDB Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mongodb-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      component: mongodb
-  template:
-    metadata:
-      labels:
-        component: mongodb
-    spec:
-      containers:
-        - name: mongodb
-          image: mongo:latest
-          ports:
-            - containerPort: 27017
-          volumeMounts:
-            - name: mongodb-persistent-storage
-              mountPath: /data/db
-      volumes:
-        - name: mongodb-persistent-storage
-          persistentVolumeClaim:
-            claimName: mongodb-pvc
-
-# PVC for mysql               
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -255,6 +101,7 @@ spec:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
             claimName: mysql-pv-claim
+
 ---
 apiVersion: v1
 kind: Service
@@ -270,3 +117,180 @@ spec:
   selector:
     app: db
   type: NodePort
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaskapi-deployment
+  labels:
+    app: flaskapi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flaskapi
+  template:
+    metadata:
+      labels:
+        app: flaskapi
+    spec:
+      containers:
+        - name: flaskapi
+          image: stevenbennett90/3495assignment1-entry:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secrets
+                  key: db_root_password
+            - name: db_name
+              value: grades
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: flaskapi
+  type: LoadBalancer
+
+---
+# mydeployment Main Services
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydeployment
+  template:
+    metadata:
+      labels:
+        app: mydeployment
+    spec:
+      containers:
+      - name: auth
+        image: stevenbennett90/3495assignment1-auth:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5001
+        resources:
+          limits:
+            memory: 200Mi
+      - name: analytics
+        image: stevenbennett90/3495assignment1-analytics:latest
+        command:
+          - python
+          - "-u"
+          - "calculate.py"
+        ports:
+          - containerPort: 5005
+        env:
+          - name: MONGO_DB_HOST
+            value: mongodb
+          - name: MYSQL_HOST
+            value: mysql-db
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PASSWORD
+            value: root
+        resources:
+          limits:
+            memory: 200Mi
+      - name: result
+        image: stevenbennett90/3495assignment1-result:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5002
+        resources:
+          limits:
+            memory: 200Mi
+---
+# mydeployment Expose Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydeployment-lb
+spec:
+  selector:
+    app: mydeployment
+  ports:
+    - name: auth
+      port: 5001
+      targetPort: 5001
+    - name: player
+      port: 5003
+      targetPort: 5003
+    - name: result
+      port: 5002
+      targetPort: 5002
+  type: LoadBalancer
+---
+# mydeployment Horizontal Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mydeployment-as
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydeployment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+---
+
+# MongoDB Database Persistent Volume Claim (Dynamic Provisioning)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
+# MongoDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: mongodb
+  template:
+    metadata:
+      labels:
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-persistent-storage
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
