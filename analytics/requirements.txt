@@ -1,3 +1,4 @@
 pymongo
 mysql.connector
 Flask
+mysql-connector-python

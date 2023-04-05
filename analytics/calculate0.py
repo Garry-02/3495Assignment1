@@ -11,26 +11,27 @@ app.secret_key = "secret_key"
 #def show_form():
 #    return render_template('analytics.html')
        
-def get_mysql_conn():
-    mysql_host = os.environ.get('MYSQL_HOST')
-    mysql_user = os.environ.get('MYSQL_USER')
-    mysql_password = os.environ.get('MYSQL_PASSWORD')
-    mysql_db = os.environ.get('MYSQL_DATABASE')
-
-    conn = mysql.connector.connect(
-        host=mysql_host,
-        user=mysql_user,
-        password=mysql_password,
-        database=mysql_db
-    )
-
-    return conn
+def get_db():
+    client = MongoClient(host='test_mongodb',
+                         port=27017, 
+                         username='root', 
+                         password='root',
+                        authSource="admin")
+    db = client["grades_db"]
+    return db
 
 @app.route("/", methods=["GET", "POST"])
 def analytics():
-    conn = get_mysql_conn()
-    cursor = conn.cursor()
-    query = "SELECT course1, course2, course3, course4, course5 from grades;"
+    config = {
+    'user': 'root',
+    'password': 'root',
+    'host': 'mysql',
+    'port': '3306',
+    'database': 'grades'
+    }
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    query = f"""SELECT course1, course2, course3, course4, course5 from grades;"""
     cursor.execute(query)
     res = cursor.fetchall()
     grades = []
@@ -51,14 +52,16 @@ def analytics():
 
     average_value = sum_of_grades/number_of_grades
 
-    db = get_mysql_conn()
+#        client = MongoClient("mongodb://user_name:user_password@localhost:27017/grades-db")
+#        db = client["grades_db"]
+
+    db = get_db()
+
     db.analytics.insert_one({
         "min_grade": min_value,
         "max_grade": max_value,
         "avg_grade": average_value
     })
-
-    conn.close()
     return redirect('http://localhost:5002/results', code=301)
 
 if __name__ == "__main__":

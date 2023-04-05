@@ -6,7 +6,7 @@ services:
     networks:
       - project1
   app:
-    image: stevenbennett90/3495assignment1-app:latest
+    image: stevenbennett90/3495assignment1-entry:latest
     links:
       - db
     ports:

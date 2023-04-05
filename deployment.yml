@@ -1,3 +1,14 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flask-secrets
+type: Opaque
+data:
+  db_root_password: cm9vdA==
+
+---
+
 # mydeployment Main Services
 apiVersion: apps/v1
 kind: Deployment
@@ -23,8 +34,8 @@ spec:
           limits:
             memory: 200Mi
             cpu: 1
-      - name: app
-        image: stevenbennett90/3495assignment1-app:latest
+      - name: flaskapi
+        image: stevenbennett90/3495assignment1-entry:latest
         imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 5000
@@ -32,6 +43,14 @@ spec:
           limits:
             memory: 200Mi
             cpu: 1
+          env:
+            - name: db_root_password
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secrets
+                  key: db_root_password
+            - name: db_name
+              value: flaskapi
       - name: analytics
         image: stevenbennett90/3495assignment1-analytics:latest
         command:
@@ -44,7 +63,7 @@ spec:
           - name: MONGO_DB_HOST
             value: mongodb
           - name: MYSQL_HOST
-            value: db
+            value: mysql-db
           - name: MYSQL_USER
             value: root
           - name: MYSQL_PASSWORD
@@ -75,7 +94,7 @@ spec:
     - name: auth
       port: 5001
       targetPort: 5001
-    - name: app
+    - name: flaskapi
       port: 5000
       targetPort: 5000
     - name: player
@@ -144,15 +163,56 @@ spec:
 # PVC for mysql               
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-pvc
+  name: mysql-pv-claim
 spec:
+  storageClassName: manual
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+data:
+  init.sql: |
+    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
+    create database if not exists grades;
+    use grades;
+    
+    create table grades (
+        grade_id int NOT NULL AUTO_INCREMENT,
+        user_id varchar(50) NOT NULL,
+        course1 int not null,
+        course2 int,
+        course3 iNT,
+        course4 int,
+        course5 int,
+        primary key (grade_id)
+    );
+    
+    Insert into grades values
+    (NULL,'Steven',90,80,70,60,50);
+
 ---
 # deployment for mysql
 apiVersion: apps/v1
@@ -160,44 +220,53 @@ kind: Deployment
 metadata:
   name: mysql
   labels:
-    app: mysql
+    app: db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mysql
+      app: db
   template:
     metadata:
       labels:
-        app: mysql
+        app: db
     spec:
       containers:
       - name: mysql
-        image: mysql:latest
+        image: mysql
         env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: root
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flask-secrets
+              key: db_root_password
         ports:
           - containerPort: 3306
-            name: mysql
+            name: db-container
         volumeMounts:
+          - name: mysql-initdb
+            mountPath: /docker-entrypoint-initdb.d
           - name: mysql-persistent-storage
             mountPath: /var/lib/mysql
       volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
         - name: mysql-persistent-storage
           persistentVolumeClaim:
-            claimName: mysql-pvc
+            claimName: mysql-pv-claim
 ---
-#MySQL Expose Service
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
+  labels:
+    app: db
 spec:
-  type: ClusterIP
-  selector:             
-    app: mysql
   ports:
-    - port: 3306  
-      targetPort: 3306
-
+  - port: 3306
+    protocol: TCP
+    name: mysql
+  selector:
+    app: db
+  type: NodePort
